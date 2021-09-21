@@ -1,6 +1,5 @@
-:local comm "WAN1-Best"
-:local interface "WAN1-Best"
-:local rmark "WAN1-Best"
+:local comm $"interface"
+:local rmark $"interface"
 :local count [/ip route print count-only where comment=$comm]
 :local countNat [/ip firewall nat print count-only where comment=$comm]
 :if ($bound=1) do={
@@ -18,7 +17,7 @@
         }
     }
     :if ($countNat = 0) do={
-        /ip firewall nat add chain=srcnat action=src-nat to-addresses=$"lease-address" src-address=192.168.1.0/24 out-interface=$interface log=no comment=$comm
+        /ip firewall nat add chain=srcnat action=src-nat to-addresses=$"lease-address" src-address=192.168.1.0/24 out-interface=$"interface" log=no comment=$comm
     } else={
         :if ($countNat = 1) do={
             :local testNat [/ip firewall nat find where comment=$comm]
