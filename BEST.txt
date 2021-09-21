@@ -1,0 +1,37 @@
+:local rmark "WAN1-Best"
+:local count [/ip route print count-only where comment="WAN1-Best"]
+:local interfaceName "WAN1-Best"
+:local countNat [/ip firewall nat print count-only where comment="WAN1-Best"]
+
+:if ($bound=1) do={
+    :if ($count = 0) do={
+        /ip route add gateway=$"gateway-address" comment="WAN1-Best" routing-mark=$rmark distance=1 check-gateway=ping\
+        /ip route add gateway=$"gateway-address" comment="WAN1-Best" distance=2 check-gateway=ping        
+    } else={
+        :if ($count = 1) do={
+            :local test [/ip route find where comment="WAN1-Best"]
+            :if ([/ip route get $test gateway] != $"gateway-address") do={
+                /ip route set $test gateway=$"gateway-address"
+            }
+        } else={
+            :error "Multiple routes found"
+        }
+    }
+    
+    :if ($countNat = 0) do={
+        /ip firewall nat chain=srcnat action=src-nat to-addresses=$"lease-address" src-address=192.168.1.0/24 out-interface=$interfaceName log=no comment="WAN1-Best"
+    } else={
+        :if ($countNat = 1) do={
+            :local test [/ip firewall nat find where comment="WAN1-Best"]
+            :if ([/ip firewall nat get $test to-addresses] != $"lease-address") do={
+                /ip firewall nat set $test to-addresses=$"lease-address"
+            }
+        } else={
+            :error "Multiple routes found"
+        }
+    }
+} else={
+    /ip route remove [find comment="WAN1-Best"]
+    /ip firewall nat remove [find comment="WAN1-Best"]
+}
+
